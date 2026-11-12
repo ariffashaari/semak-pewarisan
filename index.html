@@ -527,7 +527,7 @@ const Q = [
  {id:"q20a",s:"D",t:"Selepas wasiat dibuat, ada perubahan besar dalam hidup anda?",h:"Boleh pilih lebih daripada satu.",type:"multi",ex:["tiada"],show:()=>inc("q20","wasi")||inc("q20","w13"),o:[["kahwin","Berkahwin"],["cerai","Bercerai"],["anak","Dapat anak baru"],["harta","Beli harta baru"],["tiada","Tiada perubahan"]]},
  {id:"q20b",s:"D",t:"Apa sebab utama anda belum membuat persediaan?",type:"single",show:()=>inc("q20","tiada")||inc("q20","belum"),o:[["sempat","Belum sempat"],["mula","Tak tahu nak mula dari mana"],["perlu","Rasa tak perlu"],["waris","Waris tahu uruskan sendiri"],["yakin","Tak yakin dengan caranya"]]},
  {id:"q21",s:"D",t:"Siapa yang tahu harta dan hutang anda?",type:"single",o:[["lengkap","Ada senarai bertulis, dan keluarga tahu"],["tahu","Keluarga tahu, tapi tiada senarai bertulis"],["senarai","Ada senarai, tapi tiada siapa tahu"],["tiada","Tiada siapa yang tahu"]]},
- {id:"q22",s:"D",t:"Pernah berbincang dengan pasangan atau keluarga tentang perancangan harta?",type:"single",o:[["pernah","Pernah"],["belum","Belum"]]},
+ {id:"q22",s:"D",t:"Pernah berbincang dengan pasangan atau keluarga tentang perancangan harta?",type:"single",o:[["pernah","Pernah, dan menyeluruh"],["sebahagian","Pernah, tapi tak menyeluruh"],["belum","Belum"]]},
  {id:"q23",s:"D",t:"Pernah nampak keluarga atau kenalan menguruskan pusaka?",type:"single",o:[["mudah","Pernah, dan mudah"],["susah","Pernah, dan susah"],["lama","Pernah, bertahun-tahun belum selesai"],["tak","Tak pernah"]]},
  {id:"q24",s:"D",t:"Anda tahu di mana hendak menguruskan pusaka?",type:"single",o:[["tahu","Tahu"],["taktahu","Tak tahu"]]},
  {id:"q24a",s:"D",t:"Di mana pusaka diuruskan?",h:"Pilih jawapan yang anda rasa paling tepat.",type:"single",show:()=>v("q24")==="tahu",o:[["syariah","Mahkamah Syariah"],["tanah","Pejabat Tanah"],["arb","Amanah Raya Berhad"],["upk","Pejabat Pusaka Kecil"],["mts","Mahkamah Tinggi Sivil"],["bergantung","Bergantung kepada jenis dan nilai harta"]]},
@@ -665,6 +665,7 @@ function analyse(){
   if(["takpasti","takyakin"].includes(v("q19"))) add("hutangyakin",50,"Belum pasti hutang anda akan dibayar","Hutang yang tidak dilangsaikan kekal sebagai tanggungan si mati.");
   if(["takpasti","takyakin"].includes(v("q7"))) add("warisurus",48,"Waris mungkin tidak tahu cara menguruskan harta anda","Urusan pusaka melibatkan dokumen, agensi dan persetujuan ramai waris.");
   if(v("q18")==="takbanding") add("banding",45,"Belum pernah membandingkan aset dengan hutang","Tanpa gambaran ini, sukar mengetahui sama ada waris akan mewarisi harta atau beban.");
+  if(v("q22")==="sebahagian") add("bincang",40,"Perbincangan dengan keluarga belum menyeluruh","Pastikan keluarga tahu apa harta dan hutang anda, apa hasrat anda, dan siapa yang akan menguruskannya.");
   if(v("q22")==="belum") add("bincang",35,"Belum berbincang dengan keluarga","Perbincangan awal mengelakkan salah faham dan pertikaian kemudian.");
   I.sort((a,b)=>b.p-a.p);
 
