@@ -489,12 +489,17 @@ const v = id => A[id];
 const inc = (id, x) => Array.isArray(A[id]) && A[id].includes(x);
 const isBujang = () => v("q1") === "bujang";
 const anak = () => isBujang() && !v("q2") ? "tiada" : v("q2");
-const accts = () => ["kwsp","th","asnb","takaful"].filter(x => inc("q9", x));
-const anyPenama = () => accts().some(x => (v("q12")||{})[x] === "ada");
+const accts = () => ["kwsp","th","asnb","koperasi","takaful"].filter(x => inc("q9", x));
+const HASPEN = ["ada","hibah","wasi"];
+const anyPenama = () => accts().some(x => HASPEN.includes((v("q12")||{})[x]));
+const PEN_O = [["ada","Ada"],["tiada","Tiada"],["takpasti","Tak pasti"]];
+const PEN_TAK = [["hibah","Penama hibah"],["wasi","Penama wasi"],["tiada","Tiada"],["takpasti","Tak pasti"]];
+const penOpts = r => r==="takaful" ? PEN_TAK : PEN_O;
+const penLbl = (r,val) => { const o=penOpts(r).find(x=>x[0]===val); return o?o[1]:"-"; };
 const hasHutang = () => Array.isArray(A.q16) && A.q16.length && !inc("q16","tiada");
 
 const SEC = {A:"A · Keluarga",B:"B · Harta dan penama",C:"C · Hutang",D:"D · Persediaan",E:"E · Langkah seterusnya"};
-const ACCT_L = {kwsp:"KWSP",th:"Tabung Haji",asnb:"ASNB",takaful:"Takaful / insurans"};
+const ACCT_L = {kwsp:"KWSP",th:"Tabung Haji",asnb:"ASNB",koperasi:"Saham koperasi",takaful:"Takaful / insurans"};
 
 const Q = [
  {id:"q1",s:"A",t:"Status perkahwinan anda?",type:"single",o:[["bujang","Bujang"],["kahwin","Berkahwin"],["poligami","Berkahwin (poligami)"],["cerai","Bercerai"],["balu","Balu atau duda"]]},
@@ -510,10 +515,10 @@ const Q = [
  {id:"q7",s:"A",t:"Anda yakin waris faraid anda boleh menguruskan harta yang anda tinggalkan?",type:"single",o:[["yakin","Yakin"],["takpasti","Tak pasti"],["takyakin","Tak yakin"]]},
  {id:"q8",s:"A",t:"Umur anda?",type:"single",o:[["b40","Bawah 40"],["m","40 hingga 60"],["61","61 ke atas"]]},
 
- {id:"q9",s:"B",t:"Harta apa yang anda ada?",h:"Boleh pilih lebih daripada satu.",lock:true,type:"multi",o:[["rumah","Rumah atau tanah"],["bank","Simpanan bank"],["kwsp","KWSP"],["th","Tabung Haji"],["asnb","ASNB"],["takaful","Takaful atau insurans"],["biz","Perniagaan"],["emas","Emas"],["kenderaan","Kenderaan"]]},
+ {id:"q9",s:"B",t:"Harta apa yang anda ada?",h:"Boleh pilih lebih daripada satu.",lock:true,type:"multi",o:[["rumah","Rumah atau tanah"],["bank","Akaun simpanan, simpanan tetap atau akaun semasa"],["bersama","Akaun bersama"],["bsn","Sijil Simpanan Premium BSN"],["kwsp","KWSP"],["th","Tabung Haji"],["asnb","ASNB (ASB, ASN)"],["amanah","Saham amanah lain (unit amanah)"],["koperasi","Saham koperasi"],["dagangan","Akaun dagangan saham (CDS)"],["syarikat","Saham syarikat"],["pelaburan","Private mandate atau private equity"],["takaful","Takaful atau insurans"],["emasakaun","Akaun pelaburan emas"],["emas","Barang kemas atau emas fizikal"],["kenderaan","Kenderaan"],["biz","Perniagaan"]]},
  {id:"q10",s:"B",t:"Anggaran nilai keseluruhan harta anda?",lock:true,type:"single",o:[["b200","Bawah RM200 ribu"],["1j","RM200 ribu hingga RM1 juta"],["5j","RM1 juta hingga RM5 juta"],["a5j","RM5 juta ke atas"]]},
  {id:"q11",s:"B",t:"Nama dalam geran rumah atau tanah anda?",h:"Boleh pilih lebih daripada satu.",type:"multi",show:()=>inc("q9","rumah"),o:[["sendiri","Nama sendiri"],["bersama","Nama bersama"],["arwah","Masih nama arwah ibu atau bapa"]]},
- {id:"q12",s:"B",t:"Akaun ini sudah ada penama?",type:"matrix",show:()=>accts().length>0,rows:()=>accts(),o:[["ada","Ada"],["tiada","Tiada"],["takpasti","Tak pasti"]]},
+ {id:"q12",s:"B",t:"Akaun ini sudah ada penama?",type:"matrix",show:()=>accts().length>0,rows:()=>accts(),o:PEN_O},
  {id:"q13",s:"B",t:"Penama anda:",type:"single",show:anyPenama,o:[["dewasa","Semuanya dewasa"],["bawah","Ada yang bawah umur"],["takpasti","Tak pasti"]]},
  {id:"q14",s:"B",t:"Penama sama dengan orang yang anda mahu beri harta?",type:"single",show:anyPenama,o:[["ya","Ya"],["tidak","Tidak"],["tak","Tak pernah terfikir"]]},
  {id:"q15",s:"B",t:"Jenis perniagaan anda?",type:"single",show:()=>inc("q9","biz"),o:[["tunggal","Milik tunggal"],["kongsi","Perkongsian"],["sdn","Sdn Bhd"]]},
@@ -583,7 +588,7 @@ function render(){
       + `<button class="btn pri" id="go" onclick="next()" ${(A[q.id]||[]).length?"":"disabled"}>Seterusnya</button>`;
   } else if(q.type==="matrix"){
     const m = A[q.id]||{};
-    body = q.rows().map(r=>`<div class="mrow"><div class="lbl">${ACCT_L[r]}</div><div class="chips">${q.o.map(o=>`<button class="chip ${m[r]===o[0]?"sel":""}" onclick="mat('${r}','${o[0]}')">${o[1]}</button>`).join("")}</div></div>`).join("")
+    body = q.rows().map(r=>`<div class="mrow"><div class="lbl">${ACCT_L[r]}</div><div class="chips">${penOpts(r).map(o=>`<button class="chip ${m[r]===o[0]?"sel":""}" onclick="mat('${r}','${o[0]}')">${o[1]}</button>`).join("")}</div></div>`).join("")
       + `<button class="btn pri" onclick="next()" ${q.rows().every(r=>m[r])?"":"disabled"}>Seterusnya</button>`;
   } else if(q.type==="text"){
     const t = A[q.id]||{};
@@ -623,7 +628,7 @@ function analyse(){
   const hibahAny=["hsendiri","hpeguam","hamanah"].some(x=>inc("q20",x)), w13=inc("q20","w13"), wasiat=inc("q20","wasi")||w13;
   const none=inc("q20","tiada")||inc("q20","belum");
   const pen=v("q12")||{};
-  const noPen=accts().filter(x=>pen[x]!=="ada");
+  const noPen=accts().filter(x=>!HASPEN.includes(pen[x]) && !(x==="takaful"&&pen[x]==="takpasti"));
 
   if(married && v("q1a")==="tidak" && (kecil||oku))
     add("tanggungan",100,"Keluarga mungkin tiada tunai sementara pusaka diurus","Pasangan anda tidak bekerja dan ada anak bawah 18 tahun atau OKU. Akaun anda boleh dibekukan selepas kematian, dan bahagian anak bawah umur tidak boleh diserahkan terus kepada mereka.");
@@ -649,6 +654,13 @@ function analyse(){
   }
   if(hibahAny) add("pratanpaalw",74,"Hibah sahaja belum menyelesaikan urusan pusaka","Hibah melindungi harta yang dihibahkan. Harta lain, termasuk akaun dan simpanan, masih perlu diurus melalui proses pusaka.");
   if(inc("q20","hsendiri")) add("hibahsendiri",62,"Hibah yang dibuat sendiri perlu disemak","Pastikan rukun hibah, dokumen dan saksi lengkap, supaya hibah itu tidak mudah dipertikaikan oleh waris.");
+  if(pen.takaful==="takpasti") add("takafulpen",56,"Tidak pasti jenis penama takaful","Penama hibah menerima manfaat sebagai pemilik. Penama wasi pula hanya pemegang amanah, dan manfaat itu dibahagi ikut faraid. Semak polisi anda.");
+  if(pen.takaful==="wasi") add("takafulpen",54,"Manfaat takaful dengan penama wasi dibahagi ikut faraid","Penama wasi hanya menerima sebagai pemegang amanah. Jika anda mahu manfaat sampai terus kepada penerima tertentu, semak semula jenis penama.");
+  if(inc("q9","bersama")) add("bersama",64,"Akaun bersama tidak terus menjadi milik pemegang yang masih hidup","Bahagian anda dalam akaun bersama menjadi harta pusaka dan perlu dibahagi kepada waris, kecuali ada perancangan yang jelas.");
+  const LAIN={bank:"akaun bank",bersama:"akaun bersama",bsn:"Sijil Simpanan Premium",th:"Tabung Haji",asnb:"ASNB",amanah:"saham amanah",koperasi:"saham koperasi",dagangan:"akaun dagangan saham",syarikat:"saham syarikat",pelaburan:"pelaburan",takaful:"takaful",emasakaun:"akaun pelaburan emas",emas:"barang kemas",kenderaan:"kenderaan"};
+  const lain=Object.keys(LAIN).filter(x=>inc("q9",x));
+  if(lain.length && !hibahAny) add("hartalain",60,"Harta selain rumah belum ada perancangan","Harta seperti "+lain.slice(0,4).map(x=>LAIN[x]).join(", ")+(lain.length>4?" dan lain-lain":"")+" juga boleh dirancang semasa hidup, supaya ia sampai kepada penerima yang anda pilih.");
+  if(inc("q9","syarikat")||inc("q9","dagangan")) add("saham",57,"Saham anda menjadi harta pusaka","Saham syarikat dan saham dalam akaun dagangan perlu dipindah milik kepada waris melalui proses pusaka, dan nilainya boleh berubah sepanjang proses itu.");
   if(noPen.length) add("penama",72,"Akaun tanpa penama: "+noPen.map(x=>ACCT_L[x]).join(", "),"Akaun ini boleh dibekukan sehingga surat kuasa atau perintah pusaka dikeluarkan.");
   if(["tiada","perempuan"].includes(anak())) add("waris lain",70,"Waris lain turut menerima bahagian","Selain pasangan dan anak, waris seperti ibu, bapa atau adik-beradik turut mendapat bahagian. Bahagian setiap waris berbeza dan perlu dikira."+(v("q2c")==="ya"?" Adik-beradik seibu atau sebapa juga mungkin termasuk.":""));
   if(v("q21")==="tiada") add("senarai",70,"Tiada siapa tahu harta dan hutang anda","Harta yang tidak diketahui waris boleh tertinggal dan menjadi harta beku. Hasil anda disertakan jadual senarai harta untuk diisi.");
@@ -674,7 +686,7 @@ function analyse(){
   else if(hibahAny) S.push("Hibah sudah disediakan untuk harta tertentu");
   if(inc("q20","wasi")) S.push("Wasi sudah dilantik melalui wasiat");
   if(wasiat && inc("q20a","tiada")) S.push("Wasiat sudah ada dan tiada perubahan besar sejak dibuat");
-  if(accts().length && !noPen.length) S.push("Semua akaun yang dipilih sudah ada penama");
+  if(accts().length && !noPen.length && !["takpasti","wasi"].includes(pen.takaful)) S.push("Semua akaun yang dipilih sudah ada penama");
   if(v("q17")==="penuh") S.push("Rumah bercagar dilindungi MRTA atau MLTA");
   if(inc("q16","tiada")) S.push("Tiada hutang");
   if(v("q18")==="tunai") S.push("Aset melebihi hutang, dan ada tunai untuk melangsaikannya");
@@ -691,7 +703,7 @@ function analyse(){
   const needHK = ["tanggungan","angkat","bukanwaris","anakkecil"].some(x=>ids.has(x)) || inc("q5","konflik");
   if(hibahAny) st("Semak hibah sedia ada","Pastikan hibah anda lengkap, merangkumi semua penerima yang dihasratkan, dan disahkan jika perlu.",["hibahsendiri","angkat","bukanwaris","anakkecil","tanggungan"]);
   else if(needHK) st("Perancangan hibah untuk penerima khusus","Untuk pemberian kepada bukan waris, anak angkat, anak tiri, atau anak bawah 18 tahun dan OKU. Pilihan yang sesuai diterangkan semasa rundingcara.",["tanggungan","angkat","bukanwaris","anakkecil","hasrat","rumah","waris lain","khas"]);
-  else if(!hibahAny) st("Perancangan hibah hartanah","Ada beberapa pilihan mengikut keperluan dan bajet anda. Pilihan yang sesuai diterangkan semasa rundingcara.",["rumah","hasrat","waris lain"]);
+  else if(!hibahAny) st("Perancangan hibah","Hibah boleh dibuat untuk rumah, akaun, saham, takaful, kenderaan dan barang kemas. Ada beberapa pilihan mengikut keperluan dan bajet anda, dan pilihan yang sesuai diterangkan semasa rundingcara.",["rumah","hasrat","waris lain","hartalain","bersama","saham"]);
   {
     const nm = "Persediaan pengurusan pusaka";
 
@@ -699,7 +711,7 @@ function analyse(){
   }
   st("Semak semula wasiat","Pastikan wasiat sepadan dengan keadaan anda sekarang.",["wasiatlama","wasiatsahaja"]);
   st("Selesaikan pusaka tertunggak","Saya boleh bantu menilai kes pusaka arwah dan langkah untuk menyelesaikannya.",["tertunggak"]);
-  st("Kemas kini penama","Semak dan kemas kini penama akaun, dan fahami peranan penama.",["penama","penamakecil","penamasama"]);
+  st("Kemas kini penama","Semak dan kemas kini penama akaun, dan fahami peranan penama.",["penama","penamakecil","penamasama","takafulpen"]);
   st("Semak hutang dan perlindungannya","Senaraikan hutang, semak MRTA atau MLTA, dan pastikan ada cara untuk melangsaikannya.",["hutang","mrta","hutangyakin","banding"]);
   st("Isi senarai harta dan bincang dengan keluarga","Gunakan jadual senarai harta yang disertakan, dan kongsikan dengan orang yang dipercayai.",["senarai","bincang"]);
   L.sort((a,b)=>b.n-a.n);
@@ -736,7 +748,7 @@ function summaryRows(R){
     ["Umur",lbl("q8",v("q8"))],
     ["Harta",lbls("q9")||"-"],
     ["Anggaran nilai",lbl("q10",v("q10"))],
-    ["Penama",accts().length?accts().map(x=>ACCT_L[x]+": "+lbl("q12",(v("q12")||{})[x])).join("; "):"-"],
+    ["Penama",accts().length?accts().map(x=>ACCT_L[x]+": "+penLbl(x,(v("q12")||{})[x])).join("; "):"-"],
     ["Hutang",lbls("q16")||"-"],
     ["Persediaan",lbls("q20")],
     ["Bila mahu mula",lbl("q26",v("q26"))],
@@ -845,7 +857,7 @@ function buildPDF(){
     rowsData.concat(Array(blank).fill("")).forEach(r=>{ needA(rh); d.setDrawColor(200,190,170); d.setLineWidth(.2); let x=M; ws.forEach((w,i)=>{ d.rect(x,y,w,rh); if(i===0&&r) d.text(r,x+2,y+6.4); x+=w; }); y+=rh; });
     y+=7;
   };
-  const HL={rumah:"Rumah / tanah",bank:"Simpanan bank",kwsp:"KWSP",th:"Tabung Haji",asnb:"ASNB",takaful:"Takaful / insurans",biz:"Perniagaan",emas:"Emas",kenderaan:"Kenderaan"};
+  const HL={rumah:"Rumah / tanah",bank:"Akaun bank",bersama:"Akaun bersama",bsn:"Sijil Simpanan BSN",kwsp:"KWSP",th:"Tabung Haji",asnb:"ASNB",amanah:"Saham amanah",koperasi:"Saham koperasi",dagangan:"Akaun dagangan / CDS",syarikat:"Saham syarikat",pelaburan:"Private mandate / equity",takaful:"Takaful / insurans",emasakaun:"Akaun pelaburan emas",emas:"Barang kemas / emas",kenderaan:"Kenderaan",biz:"Perniagaan"};
   paraA("Harta",13,"bold",NAVY); y+=1;
   table(["Jenis harta","Butiran (no. akaun / lokasi)","Anggaran nilai","Penama","Dokumen asal di"],[34,52,28,28,36],(A.q9||[]).map(x=>HL[x]),6);
   paraA("Hutang",13,"bold",NAVY); y+=1;
@@ -913,7 +925,7 @@ function imgBlocks(){
   return B;
 }
 function listBlocks(){
-  const HL={rumah:"Rumah / tanah",bank:"Simpanan bank",kwsp:"KWSP",th:"Tabung Haji",asnb:"ASNB",takaful:"Takaful / insurans",biz:"Perniagaan",emas:"Emas",kenderaan:"Kenderaan"};
+  const HL={rumah:"Rumah / tanah",bank:"Akaun bank",bersama:"Akaun bersama",bsn:"Sijil Simpanan BSN",kwsp:"KWSP",th:"Tabung Haji",asnb:"ASNB",amanah:"Saham amanah",koperasi:"Saham koperasi",dagangan:"Akaun dagangan / CDS",syarikat:"Saham syarikat",pelaburan:"Private mandate / equity",takaful:"Takaful / insurans",emasakaun:"Akaun pelaburan emas",emas:"Barang kemas / emas",kenderaan:"Kenderaan",biz:"Perniagaan"};
   const DL2={rumah:"Rumah bercagar",kereta:"Kereta",peribadi:"Pinjaman peribadi",kad:"Kad kredit",biz:"Hutang perniagaan"};
   return [
     {k:"p",t:"Isi jadual ini dan simpan di tempat yang selamat. Beritahu orang yang anda percaya di mana ia disimpan.",s:24,c:"#5d6675",after:14},
