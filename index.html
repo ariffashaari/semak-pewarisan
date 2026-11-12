@@ -489,9 +489,10 @@ const v = id => A[id];
 const inc = (id, x) => Array.isArray(A[id]) && A[id].includes(x);
 const isBujang = () => v("q1") === "bujang";
 const anak = () => isBujang() && !v("q2") ? "tiada" : v("q2");
-const accts = () => ["kwsp","th","asnb","koperasi","takaful"].filter(x => inc("q9", x));
+const NOPEN_SEBENAR = ["dagangan"]; // akaun tanpa kemudahan penama: jawapan "Ada" menunjukkan prospek belum faham
+const accts = () => ["kwsp","th","asnb","koperasi","dagangan","takaful"].filter(x => inc("q9", x));
 const HASPEN = ["ada","hibah","wasi"];
-const anyPenama = () => accts().some(x => HASPEN.includes((v("q12")||{})[x]));
+const anyPenama = () => accts().some(x => !NOPEN_SEBENAR.includes(x) && HASPEN.includes((v("q12")||{})[x]));
 const PEN_O = [["ada","Ada"],["tiada","Tiada"],["takpasti","Tak pasti"]];
 const PEN_TAK = [["hibah","Penama hibah"],["wasi","Penama wasi"],["tiada","Tiada"],["takpasti","Tak pasti"]];
 const penOpts = r => r==="takaful" ? PEN_TAK : PEN_O;
@@ -499,7 +500,7 @@ const penLbl = (r,val) => { const o=penOpts(r).find(x=>x[0]===val); return o?o[1
 const hasHutang = () => Array.isArray(A.q16) && A.q16.length && !inc("q16","tiada");
 
 const SEC = {A:"A · Keluarga",B:"B · Harta dan penama",C:"C · Hutang",D:"D · Persediaan",E:"E · Langkah seterusnya"};
-const ACCT_L = {kwsp:"KWSP",th:"Tabung Haji",asnb:"ASNB",koperasi:"Saham koperasi",takaful:"Takaful / insurans"};
+const ACCT_L = {kwsp:"KWSP",th:"Tabung Haji",asnb:"ASNB",koperasi:"Saham koperasi",dagangan:"Akaun dagangan saham (CDS)",takaful:"Takaful / insurans"};
 
 const Q = [
  {id:"q1",s:"A",t:"Status perkahwinan anda?",type:"single",o:[["bujang","Bujang"],["kahwin","Berkahwin"],["poligami","Berkahwin (poligami)"],["cerai","Bercerai"],["balu","Balu atau duda"]]},
@@ -628,7 +629,7 @@ function analyse(){
   const hibahAny=["hsendiri","hpeguam","hamanah"].some(x=>inc("q20",x)), w13=inc("q20","w13"), wasiat=inc("q20","wasi")||w13;
   const none=inc("q20","tiada")||inc("q20","belum");
   const pen=v("q12")||{};
-  const noPen=accts().filter(x=>!HASPEN.includes(pen[x]) && !(x==="takaful"&&pen[x]==="takpasti"));
+  const noPen=accts().filter(x=>!NOPEN_SEBENAR.includes(x) && !HASPEN.includes(pen[x]) && !(x==="takaful"&&pen[x]==="takpasti"));
 
   if(married && v("q1a")==="tidak" && (kecil||oku))
     add("tanggungan",100,"Keluarga mungkin tiada tunai sementara pusaka diurus","Pasangan anda tidak bekerja dan ada anak bawah 18 tahun atau OKU. Akaun anda boleh dibekukan selepas kematian, dan bahagian anak bawah umur tidak boleh diserahkan terus kepada mereka.");
@@ -686,7 +687,7 @@ function analyse(){
   else if(hibahAny) S.push("Hibah sudah disediakan untuk harta tertentu");
   if(inc("q20","wasi")) S.push("Wasi sudah dilantik melalui wasiat");
   if(wasiat && inc("q20a","tiada")) S.push("Wasiat sudah ada dan tiada perubahan besar sejak dibuat");
-  if(accts().length && !noPen.length && !["takpasti","wasi"].includes(pen.takaful)) S.push("Semua akaun yang dipilih sudah ada penama");
+  if(accts().length && !noPen.length && !["takpasti","wasi"].includes(pen.takaful) && !accts().some(x=>NOPEN_SEBENAR.includes(x))) S.push("Semua akaun yang dipilih sudah ada penama");
   if(v("q17")==="penuh") S.push("Rumah bercagar dilindungi MRTA atau MLTA");
   if(inc("q16","tiada")) S.push("Tiada hutang");
   if(v("q18")==="tunai") S.push("Aset melebihi hutang, dan ada tunai untuk melangsaikannya");
