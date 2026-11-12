@@ -801,58 +801,58 @@ async function copySum(){
 // ===== PDF =====
 function buildPDF(){
   const R=LAST; const { jsPDF } = window.jspdf;
-  const d=new jsPDF({unit:"mm",format:"a4"});
-  const W=210, M=16, CW=W-2*M; let y=0;
+  const PH=[108,192]; // saiz telefon (nisbah 9:16)
+  const d=new jsPDF({unit:"mm",format:PH});
+  let W=PH[0], H=PH[1], M=8, CW=W-2*M, y=0, sc=1;
   const NAVY=[15,39,66], GOLD=[201,162,74], INK=[29,36,48], MUT=[93,102,117];
-  const head=(t)=>{ d.setFillColor(...NAVY); d.rect(0,0,W,24,"F"); d.setTextColor(...GOLD); d.setFont("helvetica","bold"); d.setFontSize(9); d.text("ARIFF ASHAARI  |  PENGURUSAN & PERANCANGAN HARTA ISLAM",M,9); d.setTextColor(255,255,255); d.setFontSize(15); d.text(t,M,18); y=32; };
-  const foot=()=>{ const n=d.getNumberOfPages(); for(let i=1;i<=n;i++){ d.setPage(i); d.setFontSize(8); d.setTextColor(...MUT); d.setFont("helvetica","italic"); d.text("Rancang kerana sayang. Insya Allah, jika anda rancang, anda tenang, keluarga senang.",W/2,288,{align:"center"}); d.setFont("helvetica","normal"); d.text("Halaman "+i+" / "+n,W-M,288,{align:"right"}); d.text("© 2026 Ariff Ashaari. Hak cipta terpelihara.",W/2,292.5,{align:"center"}); } };
-  const need=(h)=>{ if(y+h>278){ d.addPage(); y=18; } };
-  const para=(t,sz=10,st="normal",col=INK,ind=0)=>{ d.setFont("helvetica",st); d.setFontSize(sz); d.setTextColor(...col); const ls=d.splitTextToSize(t,CW-ind); const lh=sz*0.45; ls.forEach(l=>{ need(lh); d.text(l,M+ind,y); y+=lh; }); };
-  const h3=(t)=>{ need(12); y+=3; d.setFont("helvetica","bold"); d.setFontSize(12); d.setTextColor(...NAVY); d.text(t,M,y); y+=2; d.setDrawColor(...GOLD); d.setLineWidth(.6); d.line(M,y,M+30,y); y+=5; };
+  const dims=()=>{ W=d.internal.pageSize.getWidth(); H=d.internal.pageSize.getHeight(); M=W>150?16:8; CW=W-2*M; };
+  const head=(t)=>{ dims(); const hh=W>150?24:20; d.setFillColor(...NAVY); d.rect(0,0,W,hh,"F"); d.setTextColor(...GOLD); d.setFont("helvetica","bold"); d.setFontSize(W>150?9:7); d.text("ARIFF ASHAARI  |  PENGURUSAN & PERANCANGAN HARTA ISLAM",M,8); d.setTextColor(255,255,255); d.setFontSize(W>150?15:14); d.text(t,M,hh-5); y=hh+8; };
+  const foot=()=>{ const n=d.getNumberOfPages(); for(let i=1;i<=n;i++){ d.setPage(i); dims(); d.setFontSize(W>150?8:6.5); d.setTextColor(...MUT); d.setFont("helvetica","italic"); d.text(d.splitTextToSize("Rancang kerana sayang. Insya Allah, jika anda rancang, anda tenang, keluarga senang.",CW-12),M,H-9); d.setFont("helvetica","normal"); d.text(i+"/"+n,W-M,H-9,{align:"right"}); d.text("© 2026 Ariff Ashaari. Hak cipta terpelihara.",M,H-3.5); } };
+  const need=(h)=>{ if(y+h>H-15){ d.addPage(PH,"p"); dims(); y=12; } };
+  const para=(t,sz=11.5,st="normal",col=INK,ind=0)=>{ d.setFont("helvetica",st); d.setFontSize(sz); d.setTextColor(...col); const ls=d.splitTextToSize(t,CW-ind); const lh=sz*0.46; ls.forEach(l=>{ need(lh); d.text(l,M+ind,y); y+=lh; }); };
+  const h3=(t)=>{ need(16); y+=4; d.setFont("helvetica","bold"); d.setFontSize(14); d.setTextColor(...NAVY); const ls=d.splitTextToSize(t,CW); ls.forEach(l=>{ d.text(l,M,y); y+=6.4; }); y-=4; d.setDrawColor(...GOLD); d.setLineWidth(.8); d.line(M,y,M+22,y); y+=7; };
 
   head("Hasil Semakan Pewarisan");
   const t=A.q29||{};
-  para([t.nama,t.negeri].filter(Boolean).join(", ")+(t.nama||t.negeri?"  |  ":"")+"Tarikh: "+new Date().toLocaleDateString("ms-MY"),9,"normal",MUT); y+=2;
-  // kotak ringkasan
+  para([t.nama,t.negeri].filter(Boolean).join(", ")+(t.nama||t.negeri?"  |  ":"")+"Tarikh: "+new Date().toLocaleDateString("ms-MY"),10,"normal",MUT); y+=2;
+  // kotak ringkasan: label di atas, nilai di bawah, supaya muat skrin telefon
   const rows=summaryRows(R);
-  d.setFontSize(9);
-  let bh=6; rows.forEach(r=>{ bh+=d.splitTextToSize(r[1]||"-",CW-48).length*4+1.2; });
-  d.setFillColor(246,243,236); d.setDrawColor(...GOLD); d.roundedRect(M,y,CW,bh,2,2,"FD");
-  let yy=y+6;
-  rows.forEach(r=>{ d.setFont("helvetica","bold"); d.setTextColor(...NAVY); d.text(r[0],M+4,yy); d.setFont("helvetica","normal"); d.setTextColor(...INK); const ls=d.splitTextToSize(r[1]||"-",CW-48); d.text(ls,M+44,yy); yy+=ls.length*4+1.2; });
-  y+=bh+6;
-  para(OPEN[v("q28")]||OPEN.taktahu,10,"italic",NAVY); y+=2;
+  rows.forEach(r=>{ need(11); d.setFont("helvetica","bold"); d.setFontSize(10); d.setTextColor(...GOLD); d.text(r[0].toUpperCase(),M,y); y+=4.8; para(r[1]||"-",11.5,"normal",INK); y+=2.2; });
+  y+=2; para(OPEN[v("q28")]||OPEN.taktahu,12,"bolditalic",NAVY); y+=2;
 
   if(R.I.length){ h3("Apa yang belum selesai ("+R.I.length+" perkara)");
-    R.I.forEach((x,i)=>{ para((i+1)+". "+x.t+(i<3?"  [UTAMA]":""),10,"bold",i<3?[180,70,47]:NAVY); para(x.d,9.5,"normal",INK,5); y+=2; }); }
-  if(R.S.length){ h3("Apa yang sudah selamat"); R.S.forEach(x=>para("+  "+x,10,"normal",[47,122,79])); }
+    R.I.forEach((x,i)=>{ need(14); para((i+1)+". "+x.t+(i<3?"  [UTAMA]":""),12,"bold",i<3?[180,70,47]:NAVY); y+=0.6; para(x.d,11.5,"normal",INK,4); y+=3.5; }); }
+  if(R.S.length){ h3("Apa yang sudah selamat"); R.S.forEach(x=>{ para("+ "+x,11.5,"normal",[47,122,79]); y+=1.5; }); }
   if(R.L.length){ h3("Langkah yang sesuai untuk anda");
-    R.L.forEach(x=>{ para(x.t+"  (menyelesaikan "+x.n+" daripada "+R.I.length+" perkara)",10,"bold",NAVY); para(x.d,9.5,"normal",INK,5); y+=2; }); }
+    R.L.forEach(x=>{ need(14); para(x.t,12,"bold",NAVY); para("Menyelesaikan "+x.n+" daripada "+R.I.length+" perkara",10,"bold",GOLD); y+=0.6; para(x.d,11.5,"normal",INK,4); y+=3.5; });
+    para("Pilihan dan butirannya diterangkan semasa rundingcara.",10.5,"italic",MUT); }
   h3("Tahukah anda? Di mana pusaka diuruskan");
-  para(knowFeedback(),9.5,"italic",MUT);
-  KNOW.forEach(k=>{ para(k[0],9.5,"bold",NAVY); para(k[1],9.5,"normal",INK,5); y+=1; });
-  y+=3; para("Hasil ini ialah cadangan awal berdasarkan jawapan anda, bukan nasihat muktamad. Keputusan akhir dibuat selepas rundingcara. Bahagian faraid setiap waris tidak dikira di sini.",8.5,"italic",MUT);
+  para(knowFeedback(),11,"italic",MUT); y+=2;
+  KNOW.forEach(k=>{ need(12); para(k[0],11.5,"bold",NAVY); para(k[1],11,"normal",INK,4); y+=2.5; });
+  y+=2; para("Hasil ini ialah cadangan awal berdasarkan jawapan anda, bukan nasihat muktamad. Keputusan akhir dibuat selepas rundingcara. Bahagian faraid setiap waris tidak dikira di sini.",9.5,"italic",MUT);
+  y+=3; para("Rundingcara: WhatsApp Ariff Ashaari +"+WA_NUMBER,11.5,"bold",NAVY);
 
-  // Senarai harta
-  d.addPage(); head("Senarai Harta dan Hutang Saya");
-  para("Isi jadual ini dan simpan di tempat yang selamat. Beritahu orang yang anda percaya di mana ia disimpan.",9.5,"normal",MUT); y+=3;
+  // Senarai harta: saiz A4 kerana untuk dicetak dan diisi
+  d.addPage("a4","p"); head("Senarai Harta dan Hutang Saya");
+  const needA=(h)=>{ if(y+h>H-15){ d.addPage("a4","p"); dims(); y=18; } };
+  const paraA=(t,sz,st,col)=>{ d.setFont("helvetica",st||"normal"); d.setFontSize(sz); d.setTextColor(...(col||INK)); d.splitTextToSize(t,CW).forEach(l=>{ needA(sz*.45); d.text(l,M,y); y+=sz*.45; }); };
+  paraA("Halaman ini untuk dicetak dan diisi dengan tangan. Simpan di tempat yang selamat, dan beritahu orang yang anda percaya di mana ia disimpan.",10,"normal",MUT); y+=4;
   const table=(cols,ws,rowsData,blank)=>{
-    const rh=9; need(rh*2);
-    d.setFillColor(...NAVY); d.rect(M,y,CW,7,"F"); d.setTextColor(255,255,255); d.setFont("helvetica","bold"); d.setFontSize(8.5);
-    let x=M; cols.forEach((c,i)=>{ d.text(c,x+2,y+4.8); x+=ws[i]; }); y+=7;
-    d.setFont("helvetica","normal"); d.setTextColor(...INK);
-    const all=rowsData.concat(Array(blank).fill(""));
-    all.forEach(r=>{ need(rh); d.setDrawColor(200,190,170); d.setLineWidth(.2); let x=M; ws.forEach((w,i)=>{ d.rect(x,y,w,rh); if(i===0&&r) d.text(r,x+2,y+5.8); x+=w; }); y+=rh; });
-    y+=6;
+    const rh=10; needA(rh*2);
+    d.setFillColor(...NAVY); d.rect(M,y,CW,8,"F"); d.setTextColor(255,255,255); d.setFont("helvetica","bold"); d.setFontSize(9);
+    let x=M; cols.forEach((c,i)=>{ d.text(c,x+2,y+5.4); x+=ws[i]; }); y+=8;
+    d.setFont("helvetica","normal"); d.setFontSize(10); d.setTextColor(...INK);
+    rowsData.concat(Array(blank).fill("")).forEach(r=>{ needA(rh); d.setDrawColor(200,190,170); d.setLineWidth(.2); let x=M; ws.forEach((w,i)=>{ d.rect(x,y,w,rh); if(i===0&&r) d.text(r,x+2,y+6.4); x+=w; }); y+=rh; });
+    y+=7;
   };
   const HL={rumah:"Rumah / tanah",bank:"Simpanan bank",kwsp:"KWSP",th:"Tabung Haji",asnb:"ASNB",takaful:"Takaful / insurans",biz:"Perniagaan",emas:"Emas",kenderaan:"Kenderaan"};
-  para("Harta",11,"bold",NAVY); y+=1;
+  paraA("Harta",13,"bold",NAVY); y+=1;
   table(["Jenis harta","Butiran (no. akaun / lokasi)","Anggaran nilai","Penama","Dokumen asal di"],[34,52,28,28,36],(A.q9||[]).map(x=>HL[x]),6);
-  para("Hutang",11,"bold",NAVY); y+=1;
-  const DL={rumah:"Rumah bercagar",kereta:"Kereta",peribadi:"Pinjaman peribadi",kad:"Kad kredit",biz:"Hutang perniagaan"};
-  table(["Jenis hutang","Pemberi pinjaman","Baki","Perlindungan (MRTA dll.)","Dokumen di"],[34,46,26,38,34],(A.q16||[]).filter(x=>x!=="tiada").map(x=>DL[x]),4);
-  para("Orang yang tahu senarai ini: ______________________________   No. telefon: ________________",9.5); y+=6;
-  para("Untuk rundingcara, hubungi Ariff Ashaari melalui WhatsApp"+(WA_NUMBER?": +"+WA_NUMBER:"")+".",9.5,"bold",NAVY);
+  paraA("Hutang",13,"bold",NAVY); y+=1;
+  const DL3={rumah:"Rumah bercagar",kereta:"Kereta",peribadi:"Pinjaman peribadi",kad:"Kad kredit",biz:"Hutang perniagaan"};
+  table(["Jenis hutang","Pemberi pinjaman","Baki","Perlindungan (MRTA dll.)","Dokumen di"],[34,46,26,38,34],(A.q16||[]).filter(x=>x!=="tiada").map(x=>DL3[x]),4);
+  paraA("Orang yang tahu senarai ini: ______________________________   No. telefon: ________________",10.5); y+=6;
+  paraA("Untuk rundingcara, hubungi Ariff Ashaari melalui WhatsApp: +"+WA_NUMBER+".",10.5,"bold",NAVY);
   foot();
   return d.output("blob");
 }
