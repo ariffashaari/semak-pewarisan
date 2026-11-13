@@ -576,7 +576,7 @@ function back(){
   cur = hist.pop(); render();
 }
 
-function render(){
+function render(stay){
   const q = Q[cur];
   const vis = Q.filter(visible);
   const pos = vis.indexOf(q)+1;
@@ -605,17 +605,17 @@ function render(){
     ${q.lock?`<div class="lock">🔒 Jawapan ini tidak disimpan. Hanya anda yang nampak.</div>`:""}
     <button class="back" onclick="back()">‹ Kembali</button>
   </div>`;
-  window.scrollTo(0,0);
+  if(!stay) window.scrollTo(0,0);
 }
-function pick(val){ A[Q[cur].id]=val; render(); setTimeout(next,180); }
+function pick(val){ A[Q[cur].id]=val; render(true); setTimeout(next,180); }
 function tog(val){
   const q=Q[cur]; let a=A[q.id]||[];
   if(a.includes(val)) a=a.filter(x=>x!==val);
   else if(q.ex && q.ex.includes(val)) a=[val];
   else a=a.filter(x=>!(q.ex||[]).includes(x)).concat(val);
-  A[q.id]=a; render();
+  A[q.id]=a; render(true);
 }
-function mat(r,val){ const id=Q[cur].id; A[id]=Object.assign({},A[id]||{}, {[r]:val}); render(); }
+function mat(r,val){ const id=Q[cur].id; A[id]=Object.assign({},A[id]||{}, {[r]:val}); render(true); }
 function saveTxt(){ A.q29={nama:document.getElementById("nm").value.trim(),negeri:document.getElementById("ng").value.trim()}; next(); }
 
 // ===== Logik hasil =====
